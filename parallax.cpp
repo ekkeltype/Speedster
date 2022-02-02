@@ -1,5 +1,5 @@
 /*******************************************************************************************
-* Based on the raylib parallax scrolling example by Ramon Santamaria (@raysan5)
+* Very loosely based on the raylib parallax scrolling example by Ramon Santamaria (@raysan5)
 *
 ********************************************************************************************/
 
@@ -31,24 +31,24 @@ void sound_thread()
   buffer.loadFromFile("resources\\truck_engine.wav");
 
   int count = buffer.getSampleCount();
-   const sf::Int16 * p = buffer.getSamples();
+  const sf::Int16 * p = buffer.getSamples();
 
-   std::vector<sf::Int16> samples;
-   for (unsigned i = 0; i < count; ++i)
-   {
-     samples.push_back(p[i]);
-   }
+  std::vector<sf::Int16> samples;
+  for (unsigned i = 0; i < count; ++i)
+  {
+    samples.push_back(p[i]);
+  }
 
   // do the trimming
-   int trimleft = 5.5 * buffer.getSampleRate();
-   int duration = 1.0 * buffer.getSampleRate();
-   sf::SoundBuffer buffer2;
-   buffer2.loadFromSamples(samples.data()+ trimleft, duration, buffer.getChannelCount(), buffer.getSampleRate());
+  int trimleft = 5.5 * buffer.getSampleRate();
+  int duration = 1.0 * buffer.getSampleRate();
+  sf::SoundBuffer buffer2;
+  buffer2.loadFromSamples(samples.data() + trimleft, duration, buffer.getChannelCount(), buffer.getSampleRate());
   sf::Sound sound;
   sound.setBuffer(buffer2);
   for (;;)
   {
-    if(rpm_g != 0)
+    if (rpm_g != 0)
     {
       sound.setPitch((rpm_g / 1500.0) / 3 + 1.25);
       sound.setVolume(100 * rpm_g / 9000.0);
@@ -60,11 +60,11 @@ void sound_thread()
   }
 }
 
-
+void game_over(sf::Font &font, const double &global_scale_factor, sf::RenderWindow &window, bool win);
 int main(void)
 {
   sf::Font font;
-  if (!font.loadFromFile("resources/sansation.ttf"))
+  if (!font.loadFromFile("C:\\windows\\fonts\\arial.ttf"))
     return EXIT_FAILURE;
 
   std::thread sound_t(sound_thread);
@@ -75,10 +75,10 @@ int main(void)
   const int screenHeight = 450 * global_scale_factor;
 
   sf::RenderWindow window(sf::VideoMode(screenWidth, screenHeight, 32), "Speedster: Redline",
-    sf::Style::Titlebar | sf::Style::Close);
+    sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
 
   window.setVerticalSyncEnabled(true);
-    
+
   sf::Text rpm_text;
   sf::Text speed_text;
   sf::Text gear_text;
@@ -93,8 +93,7 @@ int main(void)
   constexpr int revs_per_sec = 5000;
   sf::Clock sf_clock;
 
-  car_model current_car_model;
-  car current_car(current_car_model);
+  const car_model current_car_model;
 
   double angle = 0.0;
   bool gear_ready = true;
@@ -102,26 +101,43 @@ int main(void)
 
   visual_bg background(window);
 
+  std::vector<car*> cars;
   std::vector<visual_car*> vcars;
+  std::vector<car*> ai_cars;
 
-  const int num_cars = 3;
-
-  const sf::Color colors[] = { sf::Color::Red, sf::Color::Green, sf::Color::Blue };
+  const int num_cars = 8;
+  int ai_skill[num_cars - 1];
+  sf::Color colors[num_cars] = { };
 
   for (int i = 0; i < num_cars; ++i)
   {
-      auto p_vcar = new visual_car(window);
-      auto& vcar = *p_vcar;
-      vcar.x_scale = 1.0 * global_scale_factor;
-      vcar.y_scale = 1.0 * global_scale_factor;
-      vcar.x_pos = (40 + i*10) * global_scale_factor;
-      vcar.y_pos = (345 + i*10) * global_scale_factor;
-      vcar.color = colors[i];
+    // randomize color
+    sf::Color rcolor = sf::Color(rand() % 255, rand() % 255, rand() % 255);
+    colors[i] = rcolor;
+    car * new_car = new car(current_car_model);
+    cars.push_back(new_car);
+    if (i > 0)
+    {
+      ai_cars.push_back(new_car);
+      ai_skill[i-1] = rand() % 100;
+      new_car->rpm = 1500 + ai_skill[i - 1] * 10;
+    }
 
-      vcar.rescale();
-      vcars.push_back(p_vcar);
+    auto p_vcar = new visual_car(window);
+    auto& vcar = *p_vcar;
+    vcar.x_scale = 1.0 * global_scale_factor;
+    vcar.y_scale = 1.0 * global_scale_factor;
+    vcar.x_pos = (40 + i * 10) * global_scale_factor;
+    vcar.y_pos = (345 + i * 10) * global_scale_factor;
+    vcar.color = colors[i];
+    vcar.current_color = colors[i];
+    vcar.physical_car = new_car;
+    vcar.recolor();
+    vcar.rescale();
+    vcars.push_back(p_vcar);
   }
-  
+  car& current_car = *cars[0];
+
   while (!finished) // main loop
   {
     sf::Event event;
@@ -141,6 +157,8 @@ int main(void)
     }
     float frame_time = sf_clock.restart().asSeconds();
     int fps = (int)(1.0 / frame_time);
+    if(rand() % 10 == 1)
+      std::cout << fps << "\n";
     double rev_speed = frame_time * revs_per_sec;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
@@ -152,11 +170,23 @@ int main(void)
       current_car.throttle = 0;
       if (current_car.rpm < 6000)
       {
-          current_car.gear_shift_down();
+        current_car.gear_shift_down();
       }
     }
+    for (int i = 0; i < ai_cars.size(); ++i) // ais never slow down
+    {
+      auto& ai_car = *ai_cars[i];
+      ai_car.throttle = 100;
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) )
+      int index = 1 + i;
+      int skill = ai_skill[index];
+      int shift_timing = ai_car.model.rpm_autoshift_up - (100 - skill) * 25;
+
+      if (ai_car.rpm > shift_timing) //p->model.rpm_autoshift_up)
+        ai_car.gear_shift_up();
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
     {
       if (gear_ready)
       {
@@ -169,32 +199,29 @@ int main(void)
       gear_ready = true;
     }
 
-    current_car.update_acceleration();
-
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) // braking
     {
       current_car.brake(frame_time);
     }
-    current_car.update_rpm(frame_time);
 
-    current_car.update_speed(frame_time);
+    for (auto p : cars)
+    {
+      car& c = *p;
+      
+      c.update_acceleration();
+      c.update_rpm(frame_time);
+      c.update_speed(frame_time);
 
-    if (current_car.rpm > current_car.model.rpm_max)
-      current_car.rpm = current_car.model.rpm_max;
-    if (current_car.rpm <current_car.model.rpm_min)
-      current_car.rpm = current_car.model.rpm_min;
-    
+      if (c.rpm > c.model.rpm_max)
+        c.rpm = c.model.rpm_max;
+      if (c.rpm < c.model.rpm_min)
+        c.rpm = c.model.rpm_min;
+      double car_moved_dist = c.speed * frame_time;
+      c.travel_distance += car_moved_dist;
+    }
+
     rpm = current_car.rpm;
-
-    double car_moved_dist = current_car.speed * frame_time;
-
     window.clear(sf::Color(50, 50, 50));
-
-    double speedms = current_car.speed / 3.6;
-    double wheel_rpm = (current_car_model.wheel_radius * 2 * 3.14) * speedms;
-
-    double wheel_rotation_delta = 360.0 * frame_time * wheel_rpm * 0.3;
-    
 
     double rpm_factor = ((rpm - rpm_min) / double(rpm_max - rpm_min));
 
@@ -205,9 +232,9 @@ int main(void)
     rev_bar.setOutlineThickness(3);
     rev_bar.setOutlineColor(sf::Color::White);
 
-    rev_bar.setFillColor(sf::Color(255*rpm_factor, 255-255*rpm_factor, 127-127*rpm_factor));
+    rev_bar.setFillColor(sf::Color(255 * rpm_factor, 255 - 255 * rpm_factor, 127 - 127 * rpm_factor));
     rev_bar.setOrigin(0, 0);
-    rev_bar.setPosition({ 60*global_scale_factor, 50 *global_scale_factor });
+    rev_bar.setPosition({ 60 * global_scale_factor, 50 * global_scale_factor });
 
     rpm_text.setFont(font);
     rpm_text.setCharacterSize(18 * global_scale_factor);
@@ -226,52 +253,125 @@ int main(void)
     speed_text.setPosition(rev_bar.getPoint(0).x + (rev_base_size + 80)*global_scale_factor, 40 * global_scale_factor);
     speed_text.setFillColor(sf::Color::White);
     speed_text.setString(std::to_string(int(current_car.speed)));
+
+
+    sf::Text player_arrow;
+    player_arrow.setFont(font);
+    player_arrow.setCharacterSize(36 * global_scale_factor);
+    player_arrow.setPosition(vcars[0]->x_pos + 112*global_scale_factor, 280*global_scale_factor);
+    player_arrow.setFillColor(sf::Color::White);
+    player_arrow.setOutlineColor(sf::Color::Black);
+    player_arrow.setOutlineThickness(6*global_scale_factor);
+    player_arrow.setString(L'\u25BC');/// (L'\u2193');
+    
     static double total_dist = 0;
-  //  rev_bar.setPosition({ 100,400 });
+    //  rev_bar.setPosition({ 100,400 });
 
     background.x_scale = global_scale_factor;
     background.y_scale = global_scale_factor;
 
-    background.redraw(car_moved_dist);
-    total_dist += car_moved_dist;
+    background.redraw(current_car.speed * frame_time);
+   // total_dist += car_moved_dist;
 
-   // std::cout << (int)total_dist << "\n";
-    for (auto p_vcar : vcars)
+    //vcars[0]->current_color = rev_bar.getFillColor();
+
+    // std::cout << (int)total_dist << "\n";
+
+    sf::Color car_colors[] = { sf::Color::Red, sf::Color::Blue, sf::Color::Green };
+    int cars_pwned = 0;
+    int current_position = 1;
+    for (int i = 0; i < num_cars; ++i)
     {
-       // p_vcar->rescale();
-        double relative_pos = rand() % 15 - 8;
-        if (relative_pos > 0 && p_vcar != vcars[0])
-        {
-            p_vcar->x_pos += relative_pos;
-            p_vcar->rescale();
+      auto p_vcar = vcars[i];
+      const car& physical_car = *(p_vcar->physical_car);
+      // p_vcar->rescale();
+      double speedms = physical_car.speed / 3.6;
+      double wheel_rpm = physical_car.model.wheel_radius * 2 * 3.14 * speedms;
+      double wheel_rotation_delta = 360.0 * frame_time * wheel_rpm * 0.3;
 
-            if (p_vcar->x_pos > window.getSize().x)
-            {
-                sf::Text you_lose;
-                you_lose.setFont(font);
-                you_lose.setCharacterSize(128 * global_scale_factor);
-                you_lose.setPosition(170, window.getSize().y / 2 - 200);
-                you_lose.setFillColor(sf::Color::Red);
-                you_lose.setOutlineColor(sf::Color(220,220,220));
-                you_lose.setOutlineThickness(6);
-                you_lose.setString("YOU LOSE!");
-                window.draw(you_lose);
-                window.display();
-                sf::sleep(sf::milliseconds(5000));
-            }
+      double relative_pos = physical_car.travel_distance - current_car.travel_distance;
+
+      if (i > 0)
+      {
+        if (relative_pos > 0)
+          ++current_position;
+
+        if (relative_pos < -100)
+          ++cars_pwned;
+       // std::cout << "car " << i << ": " << "rpm(" << physical_car.rpm << ") " << relative_pos << "m ahead!\n";
+        const double pixel_dist_ratio = 5.5;
+        p_vcar->x_pos = vcars[0]->x_pos + relative_pos * pixel_dist_ratio;
+        p_vcar->rescale();
+
+        if (p_vcar->x_pos > window.getSize().x)
+        {
+          game_over(font, global_scale_factor, window, false);
+          finished = true;
+        }
+        if (cars_pwned == num_cars - 1)
+        {
+          game_over(font, global_scale_factor, window, true);
+          finished = true;
 
         }
-        p_vcar->redraw(wheel_rotation_delta);
+      }
+      p_vcar->redraw(wheel_rotation_delta);
+    }
+
+    if (current_car.travel_distance >= 1609)
+    {
+      game_over(font, global_scale_factor, window, current_position == 1);
+      finished = true;
     }
 
     window.draw(rev_bar);
-    
+
     window.draw(gear_text);
     window.draw(rpm_text);
     window.draw(speed_text);
-
+    window.draw(player_arrow);
     window.display();
   }
   sound_t.join();
   return 0;
+}
+
+void game_over(sf::Font &font, const double &global_scale_factor, sf::RenderWindow &window, bool win)
+{
+  sf::Text end_text;
+  end_text.setFont(font);
+  end_text.setCharacterSize(128 * global_scale_factor);
+  end_text.setPosition(170, window.getSize().y / 2 - 200);
+  end_text.setFillColor(win ? sf::Color::Green : sf::Color::Red);
+  //end_text.setScale({ 1 / 4.f, 1/4.f});
+  end_text.setOutlineColor(sf::Color(220, 220, 220));
+  end_text.setOutlineThickness(6);
+  end_text.setString(win ? "YOU WIN!" : "YOU LOSE!");
+  window.draw(end_text);
+  window.display();
+  rpm_g = -1;
+  // sleep and handle events
+
+  sf::Clock clocks_;
+
+  for (;;)
+  {
+
+    sf::Event event;
+    while (window.pollEvent(event))
+    {
+      // Window closed or escape key pressed: exit
+      if ((event.type == sf::Event::Closed) ||
+        ((event.type == sf::Event::KeyPressed) && (event.key.code == sf::Keyboard::Escape)))
+      {
+        window.close();
+        break;
+      }
+    }
+    sf::sleep(sf::milliseconds(50));
+    if (clocks_.getElapsedTime().asMilliseconds() > 60000)
+    {
+      break;
+    }
+  }
 }
