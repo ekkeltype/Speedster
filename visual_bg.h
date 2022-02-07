@@ -36,14 +36,14 @@ struct visual_bg
   float x_scale = 1.0;
   float y_scale = 1.0;
 
-  visual_bg(sf::RenderWindow& window) : window_(window)
+  visual_bg(sf::RenderWindow& window, const std::string& bgname, int num_layers) : window_(window)
   {
-    const int use_layers[] = { 0,1,2 };
-    const int num_layers = sizeof(use_layers) / sizeof(int);
+    //const int use_layers[] = { 0,1,2 };
+   // const int num_layers = sizeof(use_layers) / sizeof(int);
     int idx = 0;
-    for (int i : use_layers)
+    for (int i = 0; i < num_layers; ++i)
     {
-      std::string filename = "cyberpunk\\" + std::to_string(i) + ".png";
+      std::string filename = bgname + "\\" + std::to_string(i) + ".png";
       layer * p_lay = new layer(filename);
       layer& lay = *p_lay;
       //	layer lay("forest\\" + std::to_string(i) + ".png");
