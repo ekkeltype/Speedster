@@ -30,7 +30,7 @@ void sound_thread()
 
   buffer.loadFromFile("resources\\truck_engine.wav");
 
-  int count = buffer.getSampleCount();
+  sf::Uint64 count = buffer.getSampleCount();
   const sf::Int16 * p = buffer.getSamples();
 
   std::vector<sf::Int16> samples;
@@ -40,8 +40,8 @@ void sound_thread()
   }
 
   // do the trimming
-  int trimleft = 5.5 * buffer.getSampleRate();
-  int duration = 1.0 * buffer.getSampleRate();
+  int trimleft = static_cast<int>(5.5 * buffer.getSampleRate());
+  int duration = static_cast<int>(1.0 * buffer.getSampleRate());
   sf::SoundBuffer buffer2;
   buffer2.loadFromSamples(samples.data() + trimleft, duration, buffer.getChannelCount(), buffer.getSampleRate());
   sf::Sound sound;
@@ -50,8 +50,8 @@ void sound_thread()
   {
     if (rpm_g != 0)
     {
-      sound.setPitch((rpm_g / 1500.0) / 3 + 1.25);
-      sound.setVolume(100 * rpm_g / 9000.0);
+      sound.setPitch((rpm_g / 1500.f) / 3 + 1.25f);
+      sound.setVolume(100 * rpm_g / 9000.f);
       sound.play();
       sf::sleep(sf::milliseconds(150));
     }
@@ -71,8 +71,8 @@ int main(void)
 
   const double global_scale_factor = 2.0;
 
-  const int screenWidth = 800 * global_scale_factor;
-  const int screenHeight = 450 * global_scale_factor;
+  const int screenWidth = static_cast<int>(800 * global_scale_factor);
+  const int screenHeight = static_cast<int>(450 * global_scale_factor);
 
   sf::RenderWindow window(sf::VideoMode(screenWidth, screenHeight, 32), "Speedster: Redline",
     sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);

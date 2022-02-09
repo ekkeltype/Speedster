@@ -74,8 +74,6 @@ struct car_model
   static constexpr double clutched_rev_per_second = 5000;
 };
 
-
-
 struct car_condition
 {
   double engine_condition = 1.0;

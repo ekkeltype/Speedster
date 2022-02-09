@@ -30,6 +30,12 @@ void game_over(sf::Font &font, const double &global_scale_factor, sf::RenderWind
 
 void main_menu(sf::RenderWindow& window);
 
+namespace screen_resolution
+{
+  int width = 0;
+  int height = 0;
+}
+
 int main(void)
 {
   sf::Font font;
@@ -38,10 +44,21 @@ int main(void)
 
   std::thread sound_t(sound_thread);
 
-  const double global_scale_factor = 2.0;
+  screen_resolution::width = sf::VideoMode::getDesktopMode().width;
+  screen_resolution::height = sf::VideoMode::getDesktopMode().height;
 
-  const int screenWidth = 800 * global_scale_factor;
-  const int screenHeight = 450 * global_scale_factor;
+  const double base_render_width = 800;
+  const double base_render_height = 450;
+
+  double wscale = screen_resolution::width / base_render_width;
+  double hscale = screen_resolution::height / base_render_height;
+   double global_scale_factor = std::min(wscale, hscale) - 1;
+
+  global_scale_factor = 2;
+  std::cout << "global scale factor is " << global_scale_factor << "\n";
+
+  const int screenWidth = static_cast<int>(800 * global_scale_factor);
+  const int screenHeight = static_cast<int>(450 * global_scale_factor);
 
   sf::RenderWindow window(sf::VideoMode(screenWidth, screenHeight, 32), "Speedster: Redline",
     sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
@@ -112,7 +129,7 @@ int main(void)
   while (!finished) // main loop
   {
     sf::Event event;
-    rpm_g = rpm;
+    rpm_g = static_cast<int>(rpm);
     while (window.pollEvent(event))
     {
       // Window closed or escape key pressed: exit
@@ -144,7 +161,7 @@ int main(void)
         current_car.gear_shift_down();
       }
     }
-    for (int i = 0; i < ai_cars.size(); ++i) // ais never slow down
+    for (unsigned i = 0; i < ai_cars.size(); ++i) // ais never slow down
     {
       auto& ai_car = *ai_cars[i];
       ai_car.throttle = 100;
@@ -198,48 +215,53 @@ int main(void)
 
     double rev_size = rev_base_size * rpm_factor * global_scale_factor;
     // double rev_size = 300;
-    rev_bar.setSize(sf::Vector2f(rev_size, 23 * global_scale_factor));
+    rev_bar.setSize(sf::Vector2f(static_cast<float>(rev_size), static_cast<float>(23 * global_scale_factor)));
 
     rev_bar.setOutlineThickness(3);
     rev_bar.setOutlineColor(sf::Color::White);
 
-    rev_bar.setFillColor(sf::Color(255 * rpm_factor, 255 - 255 * rpm_factor, 127 - 127 * rpm_factor));
+    rev_bar.setFillColor(sf::Color(
+      sf::Uint8(255 * rpm_factor), 
+      sf::Uint8(255 - 255 * rpm_factor), 
+      sf::Uint8(127 - 127 * rpm_factor)));
+
     rev_bar.setOrigin(0, 0);
-    rev_bar.setPosition({ 60 * global_scale_factor, 50 * global_scale_factor });
+    rev_bar.setPosition({ static_cast<float>(60 * global_scale_factor), static_cast<float>(50 * global_scale_factor) });
 
     rpm_text.setFont(font);
-    rpm_text.setCharacterSize(18 * global_scale_factor);
-    rpm_text.setPosition(60. * global_scale_factor, 46 * global_scale_factor);
+    rpm_text.setCharacterSize(static_cast<unsigned>(18 * global_scale_factor));
+    rpm_text.setPosition(static_cast<float>(60 * global_scale_factor), static_cast<float>(46 * global_scale_factor));
     rpm_text.setFillColor(sf::Color::White);
     rpm_text.setString(std::to_string(current_car.rpm));
 
     gear_text.setFont(font);
-    gear_text.setCharacterSize(32 * global_scale_factor);
-    gear_text.setPosition(32 * global_scale_factor, 40 * global_scale_factor);
+    gear_text.setCharacterSize(static_cast<unsigned>(32 * global_scale_factor));
+    gear_text.setPosition(static_cast<float>(32 * global_scale_factor), static_cast<float>(40 * global_scale_factor));
     gear_text.setFillColor(sf::Color::White);
     gear_text.setString(std::to_string(current_car.gear));
 
     speed_text.setFont(font);
-    speed_text.setCharacterSize(32 * global_scale_factor);
-    speed_text.setPosition(rev_bar.getPoint(0).x + (rev_base_size + 80)*global_scale_factor, 40 * global_scale_factor);
+    speed_text.setCharacterSize(static_cast<unsigned>(32 * global_scale_factor));
+    speed_text.setPosition(static_cast<float>(rev_bar.getPoint(0).x + (rev_base_size + 80)*global_scale_factor), 
+      static_cast<float>(40 * global_scale_factor));
     speed_text.setFillColor(sf::Color::White);
     speed_text.setString(std::to_string(int(current_car.speed)));
 
 
     sf::Text player_arrow;
     player_arrow.setFont(font);
-    player_arrow.setCharacterSize(36 * global_scale_factor);
-    player_arrow.setPosition(vcars[0]->x_pos + 112*global_scale_factor, 280*global_scale_factor);
+    player_arrow.setCharacterSize(static_cast<unsigned>(36 * global_scale_factor));
+    player_arrow.setPosition(static_cast<float>(vcars[0]->x_pos + 112 * global_scale_factor), static_cast<float>(280 * global_scale_factor));
     player_arrow.setFillColor(sf::Color::White);
     player_arrow.setOutlineColor(sf::Color::Black);
-    player_arrow.setOutlineThickness(6*global_scale_factor);
+    player_arrow.setOutlineThickness(static_cast<float>(6 * global_scale_factor));
     player_arrow.setString(L'\u25BC');/// (L'\u2193');
-    
+
     static double total_dist = 0;
     //  rev_bar.setPosition({ 100,400 });
 
-    background.x_scale = global_scale_factor;
-    background.y_scale = global_scale_factor;
+    background.x_scale = static_cast<float>(global_scale_factor);
+    background.y_scale = static_cast<float>(global_scale_factor);
 
     background.redraw(current_car.speed * frame_time);
    // total_dist += car_moved_dist;
@@ -311,8 +333,8 @@ void game_over(sf::Font &font, const double &global_scale_factor, sf::RenderWind
 {
   sf::Text end_text;
   end_text.setFont(font);
-  end_text.setCharacterSize(128 * global_scale_factor);
-  end_text.setPosition(170, window.getSize().y / 2 - 200);
+  end_text.setCharacterSize(static_cast<unsigned>(128 * global_scale_factor));
+  end_text.setPosition(170.f, static_cast<float>(window.getSize().y / 2 - 200));
   end_text.setFillColor(win ? sf::Color::Green : sf::Color::Red);
   //end_text.setScale({ 1 / 4.f, 1/4.f});
   end_text.setOutlineColor(sf::Color(220, 220, 220));

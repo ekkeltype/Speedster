@@ -49,7 +49,7 @@ struct visual_bg
       //	layer lay("forest\\" + std::to_string(i) + ".png");
       lay.scroll_rate = (idx + 1) / float(num_layers);
 
-      double calculated_scale = static_cast<double>(window.getSize().y) / lay.texture.getSize().y;
+      float calculated_scale = static_cast<float>(window.getSize().y) / lay.texture.getSize().y;
       lay.x_scale = calculated_scale;
       lay.y_scale = calculated_scale;
 
@@ -72,11 +72,11 @@ struct visual_bg
     for (auto p_lay : layers)
     {
       layer& lay = *p_lay;
-      lay.current_scroll_pos -= lay.scroll_rate * moved_dist / pixel_len;
+      lay.current_scroll_pos -= static_cast<float>(lay.scroll_rate * moved_dist / pixel_len);
       if (fabs(lay.current_scroll_pos) > lay.texture.getSize().x * lay.x_scale)
         lay.current_scroll_pos = 0;
 
-      lay.sprite.setPosition(lay.current_scroll_pos, i * 10);
+      lay.sprite.setPosition(lay.current_scroll_pos, static_cast<float>(i * 10));
       ++i;
 
       window_.draw(lay.sprite);

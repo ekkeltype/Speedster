@@ -30,14 +30,14 @@ sf::RectangleShape * get_rating_bar(double value, double best, double medium,
 
   sf::RectangleShape * rating_bar = new sf::RectangleShape();
 
-  rating_bar->setSize(sf::Vector2f(full_length * rating, 28.f));
+  rating_bar->setSize(sf::Vector2f(static_cast<float>(full_length * rating), 28.f));
 
   rating_bar->setOutlineThickness(4);
   rating_bar->setOutlineColor(sf::Color(32,32,32));
   if(greenIsGood)
-    rating_bar->setFillColor(sf::Color(255 - 255 * rating, 255 * rating, 127 - 127 * rating));
+    rating_bar->setFillColor(sf::Color(sf::Uint8(255 - 255 * rating), sf::Uint8(255 * rating), sf::Uint8(127 - 127 * rating)));
   else
-    rating_bar->setFillColor(sf::Color(255 * rating, 255 - 255 * rating, 127 - 127 * rating));
+    rating_bar->setFillColor(sf::Color(sf::Uint8(255 * rating), sf::Uint8(255 - 255 * rating), sf::Uint8(127 - 127 * rating)));
 
   return rating_bar;
 }
@@ -47,7 +47,7 @@ void print_mouse_move(const sf::Event& event)
   if (event.type != sf::Event::MouseMoved)
     return;
 
-  std::cout << event.mouseMove.x << ", " << event.mouseMove.y << "\n";
+  //std::cout << event.mouseMove.x << ", " << event.mouseMove.y << "\n";
 
 }
 
@@ -78,6 +78,8 @@ void car_gallery(sf::RenderWindow& window)
   sf::Color bg_color = sf::Color::Green;
   window.clear(bg_color);
   visual_bg bg(window, "country", 3);
+
+  // visual_bg bg(window, "cyberpunk", 3);
   visual_car car(window);
   const double global_scale_factor = 2.0;
   car.x_pos = (40 + 0 * 10) * global_scale_factor;
@@ -95,7 +97,7 @@ void car_gallery(sf::RenderWindow& window)
 
   sf::RectangleShape rf;
   rf.setSize({ window.getSize().x * 1.f, window.getSize().y / 3.f });
-  rf.setPosition(495,88 );
+  rf.setPosition(static_cast<float>(window.getSize().x / 2.0 - 280), 90.f);//setPosition(495,88 );
   rf.setSize({ 1197 - 495, 416 - 88 });
   rf.setFillColor({ 215,215,215, 200 });
   rf.setOutlineColor({ 127,127,127 });
@@ -107,7 +109,7 @@ void car_gallery(sf::RenderWindow& window)
 
   car_name_text.setFont(font);
   car_name_text.setCharacterSize(52);
-  car_name_text.setPosition(window.getSize().x / 2.0 - 280, 90);
+  car_name_text.setPosition(rf.getPosition().x + 10.f, rf.getPosition().y + 10.f);
   car_name_text.setFillColor(sf::Color(234, 191, 21));
   car_name_text.setOutlineColor(sf::Color(16, 16, 16));
   car_name_text.setOutlineThickness(6);
@@ -117,7 +119,7 @@ void car_gallery(sf::RenderWindow& window)
   sf::Text description_text;
   description_text.setFont(font);
   description_text.setCharacterSize(description_font_size);
-  description_text.setPosition(window.getSize().x / 2.0 - 280, 190);
+  description_text.setPosition(rf.getPosition().x + 10.f, rf.getPosition().y + 80.f); //(static_cast<float>(window.getSize().x / 2.0 - 280), 190);
   description_text.setFillColor(sf::Color(220, 220, 220));
   description_text.setOutlineColor(sf::Color(16, 16, 16));
   description_text.setOutlineThickness(6);
@@ -125,7 +127,7 @@ void car_gallery(sf::RenderWindow& window)
   sf::Text index_text;
   index_text.setFont(font);
   index_text.setCharacterSize(description_font_size);
-  index_text.setPosition(495, 430);
+  index_text.setPosition(rf.getPosition().x + 20.f, 430.f);
   index_text.setFillColor(sf::Color(234, 191, 21));
   index_text.setOutlineColor(sf::Color(16, 16, 16));
   index_text.setOutlineThickness(4);
@@ -166,7 +168,9 @@ void car_gallery(sf::RenderWindow& window)
     }
     
     car_index = std::distance(models.cbegin(), it) + 1;
-    index_text.setString("Car " + std::to_string(car_index) + " of " + std::to_string(models.size()));
+    index_text.setString(//(L'\u21E6' + 
+      std::wstring(L"< Car ") + std::to_wstring(car_index) + L" of " + std::to_wstring(models.size())
+      + L" >"); //+ L'\u21E8');
 
     std::ostringstream oss;
     oss << "Acceleration: \n";
@@ -182,10 +186,10 @@ void car_gallery(sf::RenderWindow& window)
     accel_bar->setPosition(description_text.getPosition().x + 225, description_text.getPosition().y + 13);
     
     std::unique_ptr<sf::RectangleShape> speed_bar(get_rating_bar(current_model.top_speed, 350, 250));
-    speed_bar->setPosition(description_text.getPosition().x + 225, description_text.getPosition().y + 13 + description_font_size *1.1);
+    speed_bar->setPosition(description_text.getPosition().x + 225, description_text.getPosition().y + 13 + description_font_size *1.1f);
     
     std::unique_ptr<sf::RectangleShape> power_bar(get_rating_bar(current_model.engine_bhp, 700, 350));
-    power_bar->setPosition(description_text.getPosition().x + 225, description_text.getPosition().y + 13 + description_font_size *2.2);
+    power_bar->setPosition(description_text.getPosition().x + 225, description_text.getPosition().y + 13 + description_font_size *2.2f);
 
     //car.x_pos += car_pixels_per_frame;
     //if (car.x_pos > window.getSize().x)

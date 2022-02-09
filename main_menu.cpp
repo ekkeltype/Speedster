@@ -45,6 +45,10 @@ void handle_choice(std::tuple<std::string, int, game_menu> choice, sf::RenderWin
   {
     car_gallery(window);
   }
+  if (menu_choice == "Exit")
+  {
+    exit(0);
+  }
 }
 
 void show_menu(game_menu& menu, sf::RenderWindow& window, visual_bg& bg)

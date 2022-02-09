@@ -52,27 +52,27 @@ struct visual_car
   void rescale()
   {
     //  std::cout << "setpos " << x_pos << ", " << y_pos << "\n";
-    car_body_s.setPosition(x_pos, y_pos);
+    car_body_s.setPosition(static_cast<float>(x_pos), static_cast<float>(y_pos));
     //  std::cout << "setscale " << x_scale * base_scale << ", " << y_scale * base_scale << "\n";
 
-    car_body_s.setScale(x_scale * base_scale, y_scale * base_scale);
+    car_body_s.setScale(static_cast<float>(x_scale * base_scale), static_cast<float>(y_scale * base_scale));
 
     int wheel_r = 60;
 
     double rwheel_x_offset = (12 + wheel_r / 2) * x_scale;
     double rwheel_y_offset = (38 + wheel_r / 2) * y_scale;
 
-    car_rwheel_s.setPosition(x_pos + rwheel_x_offset, y_pos + rwheel_y_offset);
-    car_rwheel_s.setScale(x_scale * base_scale, y_scale * base_scale);
+    car_rwheel_s.setPosition(static_cast<float>(x_pos + rwheel_x_offset), static_cast<float>(y_pos + rwheel_y_offset));
+    car_rwheel_s.setScale(static_cast<float>(x_scale * base_scale), static_cast<float>(y_scale * base_scale));
 
     double fwheel_x_offset = (167 + wheel_r / 2) * x_scale;
     double fwheel_y_offset = (35 + wheel_r / 2) * y_scale;
 
-    car_fwheel_s.setPosition(x_pos + fwheel_x_offset, y_pos + fwheel_y_offset);
-    car_fwheel_s.setScale(x_scale * base_scale, y_scale * base_scale);
+    car_fwheel_s.setPosition(static_cast<float>(x_pos + fwheel_x_offset), static_cast<float>(y_pos + fwheel_y_offset));
+    car_fwheel_s.setScale(static_cast<float>(x_scale * base_scale), static_cast<float>(y_scale * base_scale));
 
-    car_fwheel_s.setOrigin(wheel_r, wheel_r);
-    car_rwheel_s.setOrigin(wheel_r, wheel_r);
+    car_fwheel_s.setOrigin(static_cast<float>(wheel_r), static_cast<float>(wheel_r));
+    car_rwheel_s.setOrigin(static_cast<float>(wheel_r), static_cast<float>(wheel_r));
 
   //  car_body_s.setColor(color);
   }
@@ -83,8 +83,8 @@ struct visual_car
     if (current_wheel_angle > 360.0)
       current_wheel_angle -= 360.0;
 
-    car_fwheel_s.setRotation(current_wheel_angle);
-    car_rwheel_s.setRotation(current_wheel_angle);
+    car_fwheel_s.setRotation(static_cast<float>(current_wheel_angle));
+    car_rwheel_s.setRotation(static_cast<float>(current_wheel_angle));
 
     sf::RenderStates states;
 

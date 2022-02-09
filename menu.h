@@ -40,8 +40,8 @@ public:
     int idx = 0;
     auto window_dimensions = window.getSize();
     // est. space per menu item
-    float initial_y = (window_dimensions.y / 2) - (menu_items.size() / 2.0) * font_size;
-    float initial_x = window_dimensions.x / 2 - 100;
+    float initial_y = (window_dimensions.y / 2.f) - (menu_items.size() / 2.f) * font_size;
+    float initial_x = window_dimensions.x / 2.f - 100;
     menu_item_coord.clear();
 
     // draw headline
@@ -49,7 +49,7 @@ public:
     {
       headline_text = new sf::Text();
       headline_text->setFont(font);
-      headline_text->setCharacterSize(font_size*1.25);
+      headline_text->setCharacterSize(static_cast<int>(font_size*1.25));
       //    item_text.setPosition(170, window.getSize().y / 2 - 200);
       headline_text->setFillColor(sf::Color(220, 220, 220));
       //end_text.setScale({ 1 / 4.f, 1/4.f});
@@ -57,8 +57,8 @@ public:
       headline_text->setOutlineThickness(6);
       headline_text->setString(headline);
     }
-    int y = initial_y - (1 * font_size * spacing);
-    headline_text->setPosition(initial_x, y);
+    int y = static_cast<int>(initial_y - (1 * font_size * spacing));
+    headline_text->setPosition(initial_x, static_cast<float>(y));
     window.draw(*headline_text);
     for (auto item : menu_items)
     {
@@ -72,9 +72,9 @@ public:
         text.setFillColor(sf::Color::White);
       }
       ++idx;
-      int y = initial_y + (idx * font_size * spacing);
+      float y = initial_y + static_cast<float>(idx * font_size * spacing);
       text.setPosition( initial_x, y);
-      menu_item_coord.push_back(y);
+      menu_item_coord.push_back(static_cast<int>(y));
       window.draw(text);
     }
 
@@ -86,7 +86,7 @@ public:
 
     for (unsigned idx = 0; idx < menu_item_coord.size(); ++idx)
     {
-      int dist = std::fabs(y - menu_item_coord[idx]);
+      double dist = std::fabs(y - menu_item_coord[idx]);
       if (dist < font_size) // y-coord found, check x
       {
         sf::Text * cand = menu_item_text[menu_items[idx]];
@@ -111,13 +111,13 @@ public:
   void move_down()
   {
     ++current_item;
-    if (current_item >= menu_items.size())
+    if (current_item >= static_cast<int>(menu_items.size()))
       current_item = 0;
   }
   // returns string, index, and submenu (if any) of the currently selected menu item
   std::tuple<std::string, int, game_menu> select() const
   {
-    if (current_item < 0 || current_item >= menu_items.size())
+    if (current_item < 0 || current_item >= static_cast<int>(menu_items.size()))
     {
       return {};
     }

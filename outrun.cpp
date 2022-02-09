@@ -5,7 +5,7 @@ int width = 1024;
 int height = 768;
 int roadW = 2000;
 int segL = 200; //segment length
-float camD = 0.84; //camera depth
+float camD = 0.84f; //camera depth
 
 void drawQuad(RenderWindow &w, Color c, int x1,int y1,int w1,int x2,int y2,int w2)
 {
